@@ -863,6 +863,10 @@ attachment base_transfer_helper::populate_output_attachment(receiver_record& rec
         auto transfer = libbitcoin::chain::asset_transfer(record.symbol, record.asset_amount);
         auto ass = asset(ASSET_TRANSFERABLE_TYPE, transfer);
         return attachment(ASSET_TYPE, attach_version, ass);
+    } else if(record.type == utxo_attach_type::asset_locked_transfer) {
+        auto transfer = libbitcoin::chain::asset_transfer(record.symbol, record.asset_amount);
+        auto ass = asset(ASSET_TRANSFERABLE_TYPE, transfer);
+        return attachment(ASSET_TYPE, attach_version, ass);
     } else if(record.type == utxo_attach_type::message) {
         auto msg = boost::get<bc::chain::blockchain_message>(record.attach_elem.get_attach());
         return attachment(MESSAGE_TYPE, attach_version, msg);
@@ -1276,7 +1280,7 @@ void sending_locked_asset::populate_change() {
         
         if(unspent_asset_ - payment_asset_)
             receiver_list_.push_back({from_list_.at(0).addr, symbol_, 0, unspent_asset_ - payment_asset_,
-        utxo_attach_type::asset_locked_transfer, attachment()});
+        utxo_attach_type::asset_transfer, attachment()});
     } else {
         if(unspent_etp_ - payment_etp_)
             receiver_list_.push_back({from_, "", unspent_etp_ - payment_etp_, 0,
@@ -1284,10 +1288,11 @@ void sending_locked_asset::populate_change() {
 
         if(unspent_asset_ - payment_asset_)
             receiver_list_.push_back({from_, symbol_, 0, unspent_asset_ - payment_asset_,
-        utxo_attach_type::asset_locked_transfer, attachment()});
+        utxo_attach_type::asset_transfer, attachment()});
     }
 }
 uint32_t sending_locked_asset::get_lock_height(){
+    return deposit_cycle_;
     //uint64_t height = (deposit_cycle_*24)*(3600/24);
     uint64_t height = (deposit_cycle_)*3600;
     if(0xffffffff <= height)

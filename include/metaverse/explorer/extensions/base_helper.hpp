@@ -117,7 +117,7 @@ public:
 	virtual void populate_change() = 0; 
 
 	virtual void populate_tx_header(){
-	    tx_.version = transaction_version::max_version - 1;
+	    tx_.version = transaction_version::check_output_script;
 	    tx_.locktime = 0;
 	};
 
@@ -268,6 +268,10 @@ public:
 		{};
 
 	~sending_locked_asset(){};
+	virtual void populate_tx_header(){
+	    tx_.version = transaction_version::asset_secondissue_and_frozen;
+	    tx_.locktime = 0;
+	};
 			
 	void populate_change() override;
 	// modify lock script

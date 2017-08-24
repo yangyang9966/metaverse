@@ -1361,6 +1361,119 @@ public:
 
 };
 
+/************************ frozenasset *************************/
+
+class frozenasset: public command_extension
+{
+public:
+    static const char* symbol(){ return "frozenasset";}
+    const char* name() override { return symbol();} 
+    const char* category() override { return "EXTENSION"; }
+    const char* description() override { return "frozenasset "; }
+
+    arguments_metadata& load_arguments() override
+    {
+        return get_argument_metadata()
+            .add("ACCOUNTNAME", 1)
+            .add("ACCOUNTAUTH", 1)
+			.add("SYMBOL", 1)
+			.add("AMOUNT", 1)
+			.add("TIME", 1);
+    }
+
+    void load_fallbacks (std::istream& input, 
+        po::variables_map& variables) override
+    {
+        const auto raw = requires_raw_input();
+        load_input(auth_.name, "ACCOUNTNAME", variables, input, raw);
+        load_input(auth_.auth, "ACCOUNTAUTH", variables, input, raw);
+        load_input(argument_.symbol, "SYMBOL", variables, input, raw);
+        load_input(argument_.amount, "AMOUNT", variables, input, raw);
+        load_input(argument_.time, "TIME", variables, input, raw);
+    }
+
+    options_metadata& load_options() override
+    {
+        using namespace po;
+        options_description& options = get_option_metadata();
+        options.add_options()
+		(
+            BX_HELP_VARIABLE ",h",
+            value<bool>()->zero_tokens(),
+            "Get a description and instructions for this command."
+        )
+        (
+            BX_CONFIG_VARIABLE ",c",
+            value<boost::filesystem::path>(),
+            "The path to the configuration settings file."
+        )
+	    (
+            "ACCOUNTNAME",
+            value<std::string>(&auth_.name)->required(),
+            "Account name."
+	    )
+		(
+			"ACCOUNTAUTH",
+			value<std::string>(&auth_.auth)->required(),
+			"Account password/authorization."
+		)
+		(
+			"SYMBOL",
+			value<std::string>(&argument_.symbol)->required(),
+			"Asset symbol."
+		)
+		(
+			"AMOUNT",
+			value<uint64_t>(&argument_.amount)->required(),
+			"Asset amount."
+		)
+		(
+			"TIME",
+			value<uint64_t>(&argument_.time)->required(),
+			"Asset frozen time(seconds)."
+		)
+		(
+			"src_address,s",
+			value<std::string>(&argument_.src_address),
+			"Source address."
+		)
+		(
+			"dst_address,d",
+			value<std::string>(&argument_.dst_address),
+			"Destination address."
+		)
+	    (
+            "fee,f",
+            value<uint64_t>(&argument_.fee)->default_value(10000),
+            "The fee of tx. default_value 0.0001 etp."
+	    );
+        return options;
+    }
+
+    void set_defaults_from_config (po::variables_map& variables) override
+    {
+    }
+
+    console_result invoke (std::ostream& output,
+        std::ostream& cerr, libbitcoin::server::server_node& node) override;
+
+    struct argument
+    {
+    	std::string src_address;
+    	std::string dst_address;
+		std::string symbol;
+    	uint64_t amount;
+    	uint64_t fee;
+		uint64_t time;
+    } argument_;
+
+    struct option
+    {
+    } option_;
+
+};
+
+
 }
 } 
 }

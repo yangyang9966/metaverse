@@ -58,6 +58,7 @@ public:
 	bool is_asset_transfer();
 	bool is_asset_issue();
 	bool is_etp();
+	bool is_deposit() const;
 	
     uint64_t value;
     chain::script script;

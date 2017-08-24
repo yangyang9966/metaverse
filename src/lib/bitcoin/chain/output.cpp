@@ -191,6 +191,11 @@ bool output::is_etp()
 	return (attach_data.get_type() == ETP_TYPE);
 }
 
+bool output::is_deposit() const
+{
+    return ((output*)this)->is_etp() && chain::operation::is_pay_key_hash_with_lock_height_pattern(script.operations);
+}
+
 std::string output::get_asset_symbol() // for validate_transaction.cpp to calculate asset transfer amount
 {
 	if(attach_data.get_type() == ASSET_TYPE) {

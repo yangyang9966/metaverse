@@ -379,12 +379,13 @@ code validate_transaction::check_transaction_basic(const transaction& tx, blockc
             }
         }
 
-        for(auto& output : tx.outputs) 
+        for(const auto& output : tx.outputs) 
         {
-            if(chain::operation::is_pay_key_hash_with_lock_height_pattern(output.script.operations)) {
+            if(output.is_deposit())
+            {
                 uint64_t lock_height = chain::operation::get_lock_height_from_pay_key_hash_with_lock_height(output.script.operations);
-                if((int)lock_height < 0 
-                    || consensus::miner::get_lock_heights_index(lock_height) < 0){
+                if(consensus::miner::get_lock_heights_index(lock_height) < 0)
+                {
                     return error::invalid_output_script_lock_height;
                 }
             }

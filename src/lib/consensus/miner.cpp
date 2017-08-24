@@ -392,7 +392,8 @@ miner::block_ptr miner::create_new_block(const wallet::payment_address& pay_addr
 		vector<transaction_ptr> coinage_reward_coinbases;
 		transaction_ptr coinage_reward_coinbase;
 		for(auto& output : ptx->outputs){
-			if(chain::operation::is_pay_key_hash_with_lock_height_pattern(output.script.operations)) {
+			if(output.is_deposit())
+			{
 				int lock_height = chain::operation::get_lock_height_from_pay_key_hash_with_lock_height(output.script.operations);
 				coinage_reward_coinbase = create_coinbase_tx(wallet::payment_address::extract(ptx->outputs[0].script), calculate_lockblock_reward(lock_height, output.value), current_block_height + 1, lock_height);
 				unsigned int tx_sig_length = blockchain::validate_block::validate_block::legacy_sigops_count(*coinage_reward_coinbase);

@@ -502,8 +502,10 @@ code validate_block::connect_block(hash_digest& err_tx) const
 
         for(auto& output : transactions[tx_index].outputs)
         {
-            if(chain::operation::is_pay_key_hash_with_lock_height_pattern(output.script.operations)) {
-                if(check_get_coinage_reward_transaction(transactions[coinage_reward_coinbase_index++], output) == false) {
+            if(output.is_deposit())
+            {
+                if(check_get_coinage_reward_transaction(transactions[coinage_reward_coinbase_index++], output) == false) 
+                {
                     return error::invalid_coinage_reward_coinbase;
                 }
                 ++get_coinage_reward_tx_count;

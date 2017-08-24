@@ -631,6 +631,68 @@ console_result sendassetfrom::invoke (std::ostream& output,
     return console_result::okay;
 }
 
+/************************ frozenasset *************************/
+
+console_result frozenasset::invoke (std::ostream& output,
+        std::ostream& cerr, libbitcoin::server::server_node& node)
+{
+    auto& blockchain = node.chain_impl();
+    blockchain.is_account_passwd_valid(auth_.name, auth_.auth);
+    blockchain.uppercase_symbol(argument_.symbol);
+    
+    if (argument_.symbol.length() > ASSET_DETAIL_SYMBOL_FIX_SIZE)
+        throw asset_symbol_length_exception{"asset symbol length must be less than 64."};
+
+    if(argument_.src_address.empty() == false)
+	{
+        if (!blockchain.is_valid_address(argument_.src_address))
+            throw address_invalid_exception{"invalid src address parameter!"};
+	}
+
+    if(argument_.dst_address.empty() == false)
+	{
+        if (!blockchain.is_valid_address(argument_.dst_address))
+            throw address_invalid_exception{"invalid destination address parameter!"};
+	}
+	else
+	{
+		auto addresses = blockchain.get_account_addresses(auth_.name);
+		if (addresses && addresses->size())	
+		{
+			argument_.dst_address = (*addresses)[0].get_address();
+		}
+		else
+		{
+            throw address_invalid_exception{"get_account_addresses fail!"};
+		}
+	}
+
+    if (!argument_.amount)
+        throw asset_amount_exception{"invalid asset amount parameter!"};
+
+    if (!argument_.time)
+        throw asset_lock_time_invalid{"invalid asset lock time parameter!"};
+
+    // receiver
+    std::vector<receiver_record> receiver{
+        {argument_.dst_address, argument_.symbol, 0, argument_.amount, utxo_attach_type::asset_locked_transfer, attachment()}  
+    };
+
+    uint64_t lock_height = argument_.time % 24 ? argument_.time / 24 + 1 : argument_.time / 24;
+    auto send_helper = sending_locked_asset(*this, blockchain, std::move(auth_.name), std::move(auth_.auth), 
+            (std::string&&)argument_.src_address, std::move(argument_.symbol), std::move(receiver), argument_.fee, lock_height);
+    
+    send_helper.exec();
+
+    // json output
+    auto tx = send_helper.get_transaction();
+    pt::write_json(output, config::prop_tree(tx, true));
+    log::debug("command")<<"transaction="<<output.rdbuf();
+
+    return console_result::okay;
+}
+
+
 } //commands
 } // explorer
 } // libbitcoin
