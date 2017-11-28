@@ -151,12 +151,22 @@ u256 HeaderAux::calculateDifficulty(libbitcoin::chain::header& _bi, libbitcoin::
 		throw GenesisBlockCannotBeCalculated();
     }
 
-	if(_bi.timestamp >= _parent.timestamp + time_config)
+    if(_bi.number < FORKBLOCK)
     {
-		target = _parent.bits - (_parent.bits/1024);
-    } else {
-		target = _parent.bits + (_parent.bits/1024);
+	    if(_bi.timestamp >= _parent.timestamp + time_config)
+        {
+		    target = _parent.bits - (_parent.bits/1024);
+        } else {
+		    target = _parent.bits + (_parent.bits/1024);
+        }
     }
+    else
+    {
+        bigint const interval = (bigint)(_bi.timestamp-_parent.timestamp);
+        bigint const adjustvalue= max<bigint>(1 - interval /10 ,-99);
+        target = _parent.bits + _parent.bits/2048*adjustvalue;
+    }
+    
 	bigint result = target;
 
 	result = std::max<bigint>(minimumDifficulty, result);
