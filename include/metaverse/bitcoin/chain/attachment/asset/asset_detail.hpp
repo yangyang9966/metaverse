@@ -30,6 +30,14 @@
 #include <metaverse/bitcoin/utility/writer.hpp>
 #include "asset_cert.hpp"
 
+using namespace libbitcoin::chain;
+
+#define MODEL2UINT8(model)  (static_cast<typename std::underlying_type<asset_detail::attenuation_model>::type>(model))
+#define ATTENUATION_MODEL_NONE              MODEL2UINT8(asset_detail::attenuation_model::none)
+#define ATTENUATION_MODEL_FIXED_QUANTITY    MODEL2UINT8(asset_detail::attenuation_model::fixed_quantity)
+#define ATTENUATION_MODEL_FIXED_RATE        MODEL2UINT8(asset_detail::attenuation_model::fixed_rate)
+#define ATTENUATION_MODEL_FIRST_UNUSED      MODEL2UINT8(asset_detail::attenuation_model::unused1)
+
 namespace libbitcoin {
 namespace chain {
 
@@ -50,6 +58,19 @@ BC_CONSTEXPR size_t ASSET_DETAIL_FIX_SIZE = ASSET_DETAIL_SYMBOL_FIX_SIZE
 class BC_API asset_detail
 {
 public:
+    enum class attenuation_model : uint8_t
+    {
+        none = 0,
+        fixed_quantity = 1,
+        fixed_rate = 2,
+        unused1 = 3,
+        unused2 = 4,
+        unused3 = 5,
+        unused4 = 6,
+        unused5 = 7,
+        invalid = 8
+    };
+
     typedef std::vector<asset_detail> list;
     asset_detail();
     asset_detail(std::string symbol, uint64_t maximum_supply,
@@ -130,6 +151,12 @@ public:
         return own >= (uint64_t)(((double)total) / 100 * threshold);
     }
 
+    void set_attenuation_model(attenuation_model model) { attenuation_model_index = MODEL2UINT8(model); }
+    attenuation_model get_attenuation_model() const { return (attenuation_model)attenuation_model_index; }
+    void set_attenuation_model_index(uint8_t index) { attenuation_model_index = index; }
+    uint8_t get_attenuation_model_index() const { return attenuation_model_index; }
+    bool is_attenuation_model_index_valid() { return attenuation_model_index < ATTENUATION_MODEL_FIRST_UNUSED; }
+
 private:
     // NOTICE: ref CAssetDetail in transaction.h
     // asset_detail and CAssetDetail should have the same size and order.
@@ -138,7 +165,8 @@ private:
     uint64_t maximum_supply;
     uint8_t decimal_number;
     uint8_t secondaryissue_threshold;
-    uint8_t unused2;
+    uint8_t attenuation_model_index:3;
+    uint8_t unused2:5;
     uint8_t unused3;
     std::string issuer;
     std::string address;
